@@ -1,3 +1,4 @@
+//ProcMon Project-process monitoring tool
 using namespace std;
 
 #include <sys/types.h>
@@ -371,7 +372,7 @@ BOOL ProcessInfo::ReadLog(DWORD hr, DWORD min, DWORD date, DWORD
 				
 				cout << "Maximum application address:" << siSysInfo.lpMaximumApplicationAddress << endl;
 				
-				cout << "Active processor mask: “<<siSysInfo.dwActiveProcessorMask"<<endl;
+				cout << "Active processor mask: Â“<<siSysInfo.dwActiveProcessorMask"<<endl;
 				return TRUE;
 			}
 		
