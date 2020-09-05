@@ -25,7 +25,7 @@
 
 #define START 0				//file offset(lseek)
 #define CURRENT 1
-#define END 2
+#define END 2			//hole in the file like potential gap		//file have size 1000 byte ...we write 1st 200 and lseek by 300 .point reached at 500 and from 500 we write data...  200 to 500 is hole in file
 
 typedef struct superblock		//done		
 {
@@ -422,23 +422,29 @@ int ReadFile(int fd,char *arr,int isize)		//(0,70,3)
 	{
 		return -1;
 	}
+
 	if(UFDTArr[fd].ptrfiletable->mode != READ && UFDTArr[fd].ptrfiletable->mode != READ+WRITE)		//(3!=1) && (3!=3)
 	{
 		return -2;
 	}
+
 	if(UFDTArr[fd].ptrfiletable->ptrinode->Permission != READ && UFDTArr[fd].ptrfiletable->ptrinode->Permission != READ+WRITE)		//(3!=1) && (3!=3)
 	{
 		return -2;
 	}
+
 	if(UFDTArr[fd].ptrfiletable->readoffset == UFDTArr[fd].ptrfiletable->ptrinode->FileActualSize)	//(0 == 4)
 	{
 		return -3;
 	}
+
 	if(UFDTArr[fd].ptrfiletable->ptrinode->FileType != REGULAR)
 	{
 		return -4;
 	}
+
 	read_size = (UFDTArr[fd].ptrfiletable->ptrinode->FileActualSize) - (UFDTArr[fd].ptrfiletable->readoffset);	//4 - 0
+
 	if(read_size < isize)		//4 < 3
 	{
 		strncpy(arr,(UFDTArr[fd].ptrfiletable->ptrinode->Buffer) + (UFDTArr[fd].ptrfiletable->readoffset),read_size);
@@ -449,6 +455,7 @@ int ReadFile(int fd,char *arr,int isize)		//(0,70,3)
 		strncpy(arr,(UFDTArr[fd].ptrfiletable->ptrinode->Buffer) + (UFDTArr[fd].ptrfiletable->readoffset),isize);	//strncpy(70,1000 + 0,3)
 		(UFDTArr[fd].ptrfiletable->readoffset) = (UFDTArr[fd].ptrfiletable->readoffset) + isize;
 	}
+
 	return isize;
 }
 
@@ -468,14 +475,17 @@ int WriteFile(int fd,char *arr,int isize)		//(0,Welcome,7)		//done
 	{
 		return -1;
 	}
+
 	if(((UFDTArr[fd].ptrfiletable->ptrinode->Permission) != WRITE) && ((UFDTArr[fd].ptrfiletable->ptrinode->Permission) != READ+WRITE))		//(3 != 2) && (3 != 3)
 	{
 		return -1;
 	}
+
 	if((UFDTArr[fd].ptrfiletable->writeoffset) == MAXFILESIZE)		// 0 == 10
 	{
 		return -2;
 	}
+
 	if((UFDTArr[fd].ptrfiletable->ptrinode->FileType) != REGULAR)		//1 != 1
 	{
 		return -3;
@@ -484,9 +494,11 @@ int WriteFile(int fd,char *arr,int isize)		//(0,Welcome,7)		//done
 	{
 		return -4;
 	}
+
 	strncpy((UFDTArr[fd].ptrfiletable->ptrinode->Buffer) + (UFDTArr[fd].ptrfiletable->writeoffset),arr,isize);		//strncpy(1000 + 0,Welcome,4)
 	(UFDTArr[fd].ptrfiletable->writeoffset) = (UFDTArr[fd].ptrfiletable->writeoffset)+isize;						//0 + 4
 	(UFDTArr[fd].ptrfiletable->ptrinode->FileActualSize) = (UFDTArr[fd].ptrfiletable->ptrinode->FileActualSize) + isize;	//0 + 4
+
 	return isize;
 }
 
@@ -630,9 +642,9 @@ void CloseAll()			//done
 //	Date	: 20/11/2019
 /////////////////////////////////////////////////////////////////////////////////////////
 
-int LseekFile(int fd,int size,int from)
+int LseekFile(int fd,int size,int from)			//(0,3,1)			//done
 {
-	if((fd < 0) || (from > 2))
+	if((fd < 0) || (from > 2))			//
 	{
 		return -1;
 	}
@@ -645,7 +657,7 @@ int LseekFile(int fd,int size,int from)
 	{
 		if(from == CURRENT)
 		{
-			if(((UFDTArr[fd].ptrfiletable->readoffset) + size) > UFDTArr[fd].ptrfiletable->ptrinode->FileActualSize)
+			if(((UFDTArr[fd].ptrfiletable->readoffset) + size) > UFDTArr[fd].ptrfiletable->ptrinode->FileActualSize)	//3>4
 			{
 				return -1;
 			}
@@ -734,7 +746,7 @@ int LseekFile(int fd,int size,int from)
 //	Date	: 20/11/2019
 /////////////////////////////////////////////////////////////////////////////////////////
 
-void ls_file()
+void ls_file()				//done
 {
 	int i = 0;
 	PINODE temp = head;
@@ -885,7 +897,7 @@ int stat_file(char *name)			//done
 //	Date	: 20/11/2019
 /////////////////////////////////////////////////////////////////////////////////////////
 
-int truncate_File(char *name)
+int truncate_File(char *name)		//Demo.txt			//done
 {
 	int fd = GetFDFromName(name);
 	if(fd == -1)
@@ -893,7 +905,7 @@ int truncate_File(char *name)
 		return -1;
 	}
 
-	memset(UFDTArr[fd].ptrfiletable->ptrinode->Buffer,0,1024);
+	memset(UFDTArr[fd].ptrfiletable->ptrinode->Buffer,0,MAXFILESIZE);		//1000,0,10
 	UFDTArr[fd].ptrfiletable->readoffset = 0;
 	UFDTArr[fd].ptrfiletable->writeoffset = 0;
 	UFDTArr[fd].ptrfiletable->ptrinode->FileActualSize = 0;
@@ -1013,7 +1025,6 @@ int main()
 			}
 			else if(strcmp(command[0],"write") == 0)		//write Demo.txt
 			{
-				
 				fd = GetFDFromName(command[1]);				//get fd
 				if(fd == -1)
 				{
@@ -1054,7 +1065,7 @@ int main()
 					printf("Success : %d bytes successfully written\n",ret);
 				}
 			}
-			else if(strcmp(command[0],"truncate") == 0)
+			else if(strcmp(command[0],"truncate") == 0)			//done
 			{
 				ret = truncate_File(command[1]);
 				if(ret == -1)
@@ -1096,7 +1107,7 @@ int main()
 				}
 				continue;
 			}
-			else if(strcmp(command[0],"open") == 0)
+			else if(strcmp(command[0],"open") == 0)			//done
 			{
 				ret = OpenFile(command[1],atoi(command[2]));
 
@@ -1118,7 +1129,7 @@ int main()
 				}
 				continue;
 			}
-			else if(strcmp(command[0],"read") == 0)
+			else if(strcmp(command[0],"read") == 0)				//done
 			{
 				fd = GetFDFromName(command[1]);
 				if(fd == -1)
@@ -1165,7 +1176,7 @@ int main()
 		}
 		else if(count == 4)
 		{
-			if(strcmp(command[0],"lseek") == 0)
+			if(strcmp(command[0],"lseek") == 0)			//change the offset in file(read or write)			//done
 			{
 				fd = GetFDFromName(command[1]);
 				if(fd == -1)
@@ -1173,7 +1184,7 @@ int main()
 					printf("ERROR : Incorrecr Parameter\n");
 					continue;
 				}
-				ret = LseekFile(fd,atoi(command[2]),atoi(command[3]));
+				ret = LseekFile(fd,atoi(command[2]),atoi(command[3]));		//lseekfile(0,atoi(2),atoi(1)); //command[2] displacement
 				if(ret == -1)
 				{
 					printf("ERROR : Unable to perform lseek\n");
